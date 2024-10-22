@@ -1,62 +1,45 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { convertToUserTimezone, type MarketData, type ConvertedMarketData } from './utilities/TimeConverter';
-import axios from 'axios';
-
+// src/App.tsx
+import React from 'react';
+import { useMarketsData } from './hooks/useMarketsData';
 import './App.css';
-
-interface ApiResponse {
-  endpoint: string;
-  markets: MarketData[];
-}
+import { MarketTable } from './components/MarketsTable';
 
 function App() {
-  const [markets, setMarkets] = useState<ConvertedMarketData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { markets, loading, error, refreshData } = useMarketsData();
 
-
-const API_KEY = process.env.REACT_APP_ALPHA_VANTAGE_API_KEY;
-const URL = `https://www.alphavantage.co/query?function=MARKET_STATUS&apikey=${API_KEY}`;
-
-const fetchMarketStatus = async (): Promise<ApiResponse> => {
-  try {
-    const response = await axios.get<ApiResponse>(URL);
-    
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch market data');
-    }
-    throw new Error('An unexpected error occurred');
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+    </div>;
   }
-};
 
-  const getMarketData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await fetchMarketStatus();
-      
-      const convertedMarkets = response.markets.map(market => 
-        convertToUserTimezone(market)
-      );
-      
-      setMarkets(convertedMarkets);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch market data');
-    } finally {
-      setLoading(false);
-    }
-  }, []); 
-
-  
-  useEffect(() => {
-    getMarketData();
-  })
+  if (error) {
+    return <div className="flex items-center justify-center min-h-screen">
+      <div className="text-red-600 text-center">
+        <h2 className="text-xl font-bold mb-2">Error</h2>
+        <p>{error}</p>
+        <button 
+          onClick={refreshData}
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Try Again
+        </button>
+      </div>
+    </div>;
+  }
 
   return (
-    <div className="App">
-      <h1>Market Data</h1>
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Market Status</h1>
+        <button 
+          onClick={refreshData}
+          className="px-4 py-2 bg-gray-100 rounded hover:bg-gray-200"
+        >
+          Refresh
+        </button>
+      </div>
+      <MarketTable markets={markets} />
     </div>
   );
 }

@@ -15,7 +15,8 @@ export const useMarketsData = () => {
 
 
     const API_KEY = process.env.REACT_APP_ALPHA_VANTAGE_API_KEY;
-    const URL = `https://www.alphavantage.co/query?function=MARKET_STATUS&apikey=${API_KEY}`;
+    // const URL = `https://www.alphavantage.co/query?function=MARKET_STATUS&apikey=${API_KEY}`;
+    const URL = `https://www.alphavantage.co/query?function=MARKET_STATUS&apikey=demo`;
 
     const fetchMarketStatus = async (): Promise<ApiResponse> => {
         try {
