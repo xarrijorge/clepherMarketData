@@ -1,24 +1,22 @@
-import React from 'react';
-import logo from './logo.svg';
+import React, {useState, useEffect} from 'react';
+import { getUserLocation, Coordinates } from './utilities/GetUserLocation';
 import './App.css';
 
 function App() {
+  const [location, setLocation] = useState<Coordinates | null>(null);
+
+  useEffect(() => {
+    getUserLocation()
+      .then((coords) => {
+        setLocation(coords);
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  }, []);
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <h1>Market Data</h1>
     </div>
   );
 }
