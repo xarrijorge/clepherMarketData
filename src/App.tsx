@@ -1,19 +1,12 @@
-import React, {useState, useEffect} from 'react';
-import { getUserLocation, Coordinates } from './utilities/GetUserLocation';
+import React, { useState, useEffect } from 'react';
+import { convertToUserTimezone, type MarketData, type ConvertedMarketData } from './utilities/TimeConverter';
 import './App.css';
 
 function App() {
-  const [location, setLocation] = useState<Coordinates | null>(null);
+  const [markets, setMarkets] = useState<ConvertedMarketData[]>([]);
 
-  useEffect(() => {
-    getUserLocation()
-      .then((coords) => {
-        setLocation(coords);
-      })
-      .catch((err) => {
-        console.error(err);
-      });
-  }, []);
+  // We'll add the API call here later
+
   return (
     <div className="App">
       <h1>Market Data</h1>
