@@ -1,8 +1,8 @@
 // src/App.tsx
 import React from 'react';
 import { useMarketsData } from './hooks/useMarketsData';
-import './App.css';
 import { MarketTable } from './components/MarketsTable';
+import './App.css';
 
 function App() {
   const { markets, loading, error, refreshData } = useMarketsData();

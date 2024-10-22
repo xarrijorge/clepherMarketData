@@ -1,5 +1,6 @@
 // src/components/MarketTable.tsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import { ConvertedMarketData } from '../utilities/TimeConverter';
 
@@ -15,72 +16,16 @@ interface MarketTableProps {
   markets: ConvertedMarketData[];
 }
 
-// Pagination component defined within the same file
-const Pagination: React.FC<{
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-}> = ({ currentPage, totalPages, onPageChange }) => {
-  const getPageNumbers = () => {
-    const pages = [];
-    for (let i = 1; i <= totalPages; i++) {
-      if (
-        i === 1 || // First page
-        i === totalPages || // Last page
-        (i >= currentPage - 1 && i <= currentPage + 1) // Pages around current page
-      ) {
-        pages.push(i);
-      } else if (i === currentPage - 2 || i === currentPage + 2) {
-        pages.push('...');
-      }
-    }
-    return pages;
-  };
+const ROWS_PER_PAGE = 10;
 
-  return (
-    <div className="flex items-center justify-center gap-2 py-4">
-      <button
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className="px-3 py-1 rounded-md text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-100"
-      >
-        Previous
-      </button>
-      
-      {getPageNumbers().map((page, index) => (
-        <button
-          key={index}
-          onClick={() => typeof page === 'number' ? onPageChange(page) : null}
-          disabled={typeof page !== 'number'}
-          className={`
-            px-3 py-1 rounded-md text-sm font-medium
-            ${typeof page !== 'number' ? 'cursor-default' : 'hover:bg-slate-100'}
-            ${currentPage === page ? 'bg-blue-100 text-blue-600' : 'text-slate-600'}
-          `}
-        >
-          {page}
-        </button>
-      ))}
-
-      <button
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className="px-3 py-1 rounded-md text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-100"
-      >
-        Next
-      </button>
-    </div>
-  );
-};
-
-// Main MarketTable component
 export const MarketTable: React.FC<MarketTableProps> = ({ markets = [] }) => {
+  const navigate = useNavigate();
+  const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState<SortConfig>({
-    key: 'current_status',
-    order: 'desc'
+    key: 'current_status',  // Default sort by status
+    order: 'desc'  // Open markets first
   });
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [currentPage, setCurrentPage] = useState(1);
 
   const headers: { key: SortKey; label: string }[] = [
     { key: 'region', label: 'Region' },
@@ -97,6 +42,16 @@ export const MarketTable: React.FC<MarketTableProps> = ({ markets = [] }) => {
     }));
   };
 
+  const handleRowClick = (market: ConvertedMarketData) => {
+    const exchange = market.primary_exchanges
+      .split(',')[0]
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '-');
+    
+    navigate(`/exchange/${market.region.toLowerCase()}/${exchange}`);
+  };
+
   // Filter based on search query
   const filteredMarkets = useMemo(() => {
     if (!markets) return [];
@@ -111,27 +66,43 @@ export const MarketTable: React.FC<MarketTableProps> = ({ markets = [] }) => {
   // Sort markets based on sort config
   const sortedMarkets = useMemo(() => {
     return [...filteredMarkets].sort((a, b) => {
-      if (a[sortConfig.key] < b[sortConfig.key]) {
+      const aValue = a[sortConfig.key];
+      const bValue = b[sortConfig.key];
+
+      if (sortConfig.key === 'current_status') {
+        // Custom sorting for status (OPEN first)
+        const aIsOpen = a.current_status.toLowerCase() === 'open';
+        const bIsOpen = b.current_status.toLowerCase() === 'open';
+        
+        if (aIsOpen === bIsOpen) return 0;
+        if (sortConfig.order === 'asc') {
+          return aIsOpen ? 1 : -1;
+        } else {
+          return aIsOpen ? -1 : 1;
+        }
+      }
+
+      if (aValue < bValue) {
         return sortConfig.order === 'asc' ? -1 : 1;
       }
-      if (a[sortConfig.key] > b[sortConfig.key]) {
+      if (aValue > bValue) {
         return sortConfig.order === 'asc' ? 1 : -1;
       }
       return 0;
     });
   }, [filteredMarkets, sortConfig]);
 
+  // Pagination
+  const totalPages = Math.ceil(sortedMarkets.length / ROWS_PER_PAGE);
   const paginatedMarkets = useMemo(() => {
-    const startIndex = (currentPage - 1) * 10;
-    return sortedMarkets.slice(startIndex, startIndex + 10);
+    const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
+    return sortedMarkets.slice(startIndex, startIndex + ROWS_PER_PAGE);
   }, [sortedMarkets, currentPage]);
 
-  const totalPages = Math.ceil(sortedMarkets.length / 10);
-
-  // Reset to first page when filtering
+  // Reset to first page when searching or sorting
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery]);
+  }, [searchQuery, sortConfig]);
 
   return (
     <div className="flex flex-col">
@@ -173,18 +144,30 @@ export const MarketTable: React.FC<MarketTableProps> = ({ markets = [] }) => {
           <tbody className="bg-white divide-y divide-slate-200">
             {paginatedMarkets.length > 0 ? (
               paginatedMarkets.map((market, index) => (
-                <tr key={`${market.region}-${index}`} className="hover:bg-slate-50">
+                <tr
+                  key={`${market.region}-${index}`}
+                  onClick={() => handleRowClick(market)}
+                  className="hover:bg-slate-50 transition-colors cursor-pointer"
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm font-medium text-slate-900">{market.region}</span>
+                    <span className="text-sm font-medium text-slate-900">
+                      {market.region}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-slate-900">{market.market_type}</span>
+                    <span className="text-sm text-slate-900">
+                      {market.market_type}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-slate-500">{market.primary_exchanges}</span>
+                    <span className="text-sm text-slate-500">
+                      {market.primary_exchanges}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-slate-500">{market.userTime}</span>
+                    <span className="text-sm text-slate-500">
+                      {market.userTime}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`
@@ -210,11 +193,54 @@ export const MarketTable: React.FC<MarketTableProps> = ({ markets = [] }) => {
       </div>
 
       {totalPages > 1 && (
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-        />
+        <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-slate-200">
+          <div className="flex items-center">
+            <p className="text-sm text-slate-700">
+              Showing{' '}
+              <span className="font-medium">{((currentPage - 1) * ROWS_PER_PAGE) + 1}</span>
+              {' '}-{' '}
+              <span className="font-medium">
+                {Math.min(currentPage * ROWS_PER_PAGE, sortedMarkets.length)}
+              </span>
+              {' '}of{' '}
+              <span className="font-medium">{sortedMarkets.length}</span>
+              {' '}results
+            </p>
+          </div>
+          
+          <div className="flex gap-2">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 rounded-md text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-100"
+            >
+              Previous
+            </button>
+
+            {[...Array(totalPages)].map((_, i) => (
+              <button
+                key={i + 1}
+                onClick={() => setCurrentPage(i + 1)}
+                className={`
+                  px-3 py-1 rounded-md text-sm font-medium
+                  ${currentPage === i + 1 
+                    ? 'bg-blue-100 text-blue-600' 
+                    : 'text-slate-600 hover:bg-slate-100'}
+                `}
+              >
+                {i + 1}
+              </button>
+            ))}
+
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 rounded-md text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-100"
+            >
+              Next
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
