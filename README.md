@@ -84,6 +84,20 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## License
 This project is licensed under the MIT License - see the LICENSE file for details.
 
+## AI Assistance
+This project was developed with the help of AI tools:
+
+TypeScript interfaces and type definitions were refined with assistance from Claude AI
+Market symbols configuration and mapping were generated using ChatGPT
+These AI contributions helped streamline the development process while maintaining code quality and type safety
+
+## Acknowledgments
+
+- Data provided by Alpha Vantage
+- Charts powered by Recharts
+- TypeScript assistance provided by Claude AI
+- Exchange symbol generation assisted by ChatGPT
+
 ## Acknowledgments
 - Data provided by [Alpha Vantage](https://www.alphavantage.co/)
 - Charts powered by [Recharts](https://recharts.org/)
