@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import dailyData from '../utilities/daily.json'
-import weeklyData from '../utilities/weekly.json'
-import monthlyData from '../utilities/monthly.json'
 
 type TimeSeriesType = 'daily' | 'weekly' | 'monthly';
 
@@ -50,8 +47,13 @@ const LINE_CONFIGS: LineConfig[] = [
   { key: 'low', color: '#dc2626', label: 'Low' }
 ];
 
+const API_KEY = process.env.REACT_APP_ALPHA_VANTAGE_API_KEY || 'demo';
+
 export const Exchange: React.FC = () => {
-  const { region, exchange } = useParams();
+  const [searchParams] = useSearchParams();
+  const symbols = searchParams.get('symbols')?.split(',') || [];
+  const [selectedSymbol, setSelectedSymbol] = useState(symbols[0] || '');
+  
   const [timeSeriesType, setTimeSeriesType] = useState<TimeSeriesType>('daily');
   const [marketData, setMarketData] = useState<MarketResponse | null>(null);
   const [chartData, setChartData] = useState<ChartData[]>([]);
@@ -86,6 +88,19 @@ export const Exchange: React.FC = () => {
     }
   };
 
+  const getFunctionName = (type: TimeSeriesType): string => {
+    switch (type) {
+      case 'daily':
+        return 'TIME_SERIES_DAILY';
+      case 'weekly':
+        return 'TIME_SERIES_WEEKLY';
+      case 'monthly':
+        return 'TIME_SERIES_MONTHLY';
+      default:
+        return 'TIME_SERIES_DAILY';
+    }
+  };
+
   const processDataForChart = (data: any, type: TimeSeriesType): ChartData[] => {
     const timeSeriesKey = getTimeSeriesKey(type);
     const timeSeries = data[timeSeriesKey];
@@ -109,56 +124,73 @@ export const Exchange: React.FC = () => {
 
     return processedData;
   };
+
+  const renderTitle = (marketData: MarketResponse | null) => {
+    const symbol = marketData?.['Meta Data']?.['2. Symbol'] || selectedSymbol;
+    const lastRefreshed = marketData?.['Meta Data']?.['3. Last Refreshed'] || 'N/A';
   
+    return (
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900">
+          {symbol}
+        </h1>
+        <p className="text-sm text-slate-500">
+          Last Updated: {lastRefreshed}
+        </p>
+      </div>
+    );
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchMarketData = async () => {
+      if (!selectedSymbol) return;
+      
       try {
         setLoading(true);
-        let sampleData: any;
-            
-        switch (timeSeriesType) {
-          case 'daily':
-            sampleData = dailyData;
-            break;
-          case 'weekly':
-            sampleData = weeklyData;
-            break;
-          case 'monthly':
-            sampleData = monthlyData;
-            break;
-          default:
-            sampleData = dailyData;
+        setError(null);
+
+        const functionName = getFunctionName(timeSeriesType);
+        const outputSize = timeSeriesType === 'daily' ? '&outputsize=full' : '';
+        const url = `https://www.alphavantage.co/query?function=${functionName}&symbol=${selectedSymbol}${outputSize}&apikey=${API_KEY}`;
+
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data['Error Message']) {
+          throw new Error(data['Error Message']);
         }
 
-        const processed = processDataForChart(sampleData, timeSeriesType);
-        setMarketData(sampleData as MarketResponse);
+        // Check if we received valid data
+        if (!data['Meta Data']) {
+          throw new Error('Invalid data received from API');
+        }
+
+        const processed = processDataForChart(data, timeSeriesType);
+        if (processed.length === 0) {
+          throw new Error('No data available for this time period');
+        }
+
+        setMarketData(data as MarketResponse);
         setChartData(processed);
       } catch (err) {
-        console.error('Error processing data:', err);
+        console.error('Error fetching data:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch data');
+        setMarketData(null);
+        setChartData([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, [timeSeriesType]);
+    fetchMarketData();
+  }, [timeSeriesType, selectedSymbol]);
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="text-red-600">{error}</div>
-      </div>
-    );
-  }
+    return <div className="flex flex-col items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      <p>Getting Data ...</p>
+    </div>;
+  } 
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -172,32 +204,60 @@ export const Exchange: React.FC = () => {
         <p className="text-2xl font-thin text-slate-900">Data truncated to first 50 entries</p>
       </div>
 
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">
+                Error loading data
+              </h3>
+              <div className="mt-2 text-sm text-red-700">
+                {error}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-lg shadow-lg p-6">
         <div className="flex flex-col gap-4 mb-6">
           <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900">
-                {marketData?.['Meta Data']['2. Symbol']}
-              </h1>
-              <p className="text-sm text-slate-500">
-                Last Updated: {marketData?.['Meta Data']['3. Last Refreshed']}
-              </p>
-            </div>
-            <div className="flex gap-2">
-              {(['daily', 'weekly', 'monthly'] as TimeSeriesType[]).map((type) => (
-                <button
-                  key={type}
-                  onClick={() => setTimeSeriesType(type)}
-                  className={`
-                    px-4 py-2 rounded-md text-sm font-medium 
-                    ${timeSeriesType === type 
-                      ? 'bg-blue-600 text-white' 
-                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}
-                  `}
+            {renderTitle(marketData)}
+            <div className="flex gap-4 items-center">
+              {symbols.length > 1 && (
+                <select
+                  value={selectedSymbol}
+                  onChange={(e) => setSelectedSymbol(e.target.value)}
+                  className="px-3 py-2 rounded-md text-sm font-medium border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
-                </button>
-              ))}
+                  {symbols.map((symbol) => (
+                    <option key={symbol} value={symbol}>
+                      {symbol}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <div className="flex gap-2">
+                {(['daily', 'weekly', 'monthly'] as TimeSeriesType[]).map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setTimeSeriesType(type)}
+                    className={`
+                      px-4 py-2 rounded-md text-sm font-medium 
+                      ${timeSeriesType === type 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}
+                    `}
+                  >
+                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
