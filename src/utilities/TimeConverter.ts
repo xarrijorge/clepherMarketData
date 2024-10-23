@@ -1,20 +1,6 @@
 // src/utilities/TimeConverter.ts
 import { DateTime } from 'luxon';
-
-export interface MarketData {
-  market_type: string;
-  region: string;
-  primary_exchanges: string;
-  local_open: string;
-  local_close: string;
-  current_status: string;
-  notes: string;
-}
-
-export interface ConvertedMarketData extends MarketData {
-  userTime: string;
-  isOpenNow: boolean;
-}
+import { MarketData, ConvertedMarketData } from './interfaces';
 
 // Market timezone mappings
 const MARKET_TIMEZONES: Record<string, string> = {

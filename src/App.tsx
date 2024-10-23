@@ -3,30 +3,18 @@ import React from 'react';
 import { useMarketsData } from './hooks/useMarketsData';
 import { MarketTable } from './components/MarketsTable';
 import './App.css';
+import { Loading } from './components/Loading';
+import { ShowError } from './components/Error';
 
 function App() {
   const { markets, loading, error, refreshData } = useMarketsData();
 
   if (loading) {
-    return <div className="flex flex-col items-center justify-center min-h-screen">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
-      <p>Getting Data ...</p>
-    </div>;
+    return <Loading />; 
   }  
 
   if (error) {
-    return <div className="flex items-center justify-center min-h-screen">
-      <div className="text-red-600 text-center">
-        <h2 className="text-xl font-bold mb-2">Error</h2>
-        <p>{error}</p>
-        <button 
-          onClick={refreshData}
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          Try Again
-        </button>
-      </div>
-    </div>;
+    return <ShowError error={error} onRetry={refreshData} />; 
   }
 
   return (

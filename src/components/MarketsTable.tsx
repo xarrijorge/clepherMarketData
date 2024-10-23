@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronUp, ChevronDown } from 'lucide-react';
-import { ConvertedMarketData } from '../utilities/TimeConverter';
+import { ConvertedMarketData } from '../utilities/interfaces';
 import { MARKET_SYMBOLS } from '../utilities/marketSymbols';
 
 type SortKey = keyof ConvertedMarketData;
