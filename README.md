@@ -1,46 +1,89 @@
-# Getting Started with Create React App
+# Clepher Market Data Visualization
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A React-based financial market data visualization tool that provides real-time market data and interactive charts for various global exchanges.
 
-## Available Scripts
+## Live Demo
+[View Live Demo](https://clepherdataviz.netlify.app/)
 
-In the project directory, you can run:
+## Overview
+This project provides a user interface for viewing and analyzing financial market data across different global exchanges. It features interactive charts with customizable views and multiple data timeframes.
 
-### `npm start`
+## Features
+- Real-time market data visualization
+- Multiple timeframe views (Daily, Weekly, Monthly)
+- Interactive line chart with toggleable data points
+- Support for multiple exchanges
+- Responsive design
+- Custom data filters and sorting
+- Search functionality for markets
+- Pagination for market listings
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## Currently Available Exchanges - if using demo API key
+**Note:** At present, only the following exchanges have active data and should be clicked for visualization:
+- United States (IBM) - Daily, Weekly, Monthly
+- United Kingdom (TSCO.LON) - Daily, Weekly, Monthly
+- Canada (SHOP.TRT, GPV.TRV) - Daily
+- India (RELIANCE.BSE) - Daily
+- Germany (MBG.DEX) - Daily
+- China (600104.SHH, 000002.SHZ) - Daily
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## Technologies Used
+- React
+- TypeScript
+- Recharts
+- TailwindCSS
+- Alpha Vantage API
+- React Router
 
-### `npm test`
+## Installation
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+1. Clone the repository:
+```bash
+git clone https://github.com/xarrijorge/clepherMarketData.git
+```
 
-### `npm run build`
+2. Install dependencies:
+```bash
+cd clepherMarketData
+npm install
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+3. Create a `.env` file in the root directory and add your Alpha Vantage API key:
+```
+REACT_APP_ALPHA_VANTAGE_API_KEY=your_api_key_here
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+4. Start the development server:
+```bash
+npm start
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Usage
 
-### `npm run eject`
+### Market Table
+- Use the search bar to filter markets
+- Click column headers to sort data
+- Click on any row to view detailed charts for that market
+- Use pagination to navigate through market listings
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+### Chart View
+- Toggle between Daily, Weekly, and Monthly views
+- Use the line toggles to show/hide specific data points
+- For markets with multiple exchanges, use the dropdown to switch between them
+- Hover over the chart to see detailed values
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## API Integration
+The project uses the Alpha Vantage API for market data. API calls are limited based on your API key tier.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+## Contributing
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+## Repository
+[GitHub Repository](https://github.com/xarrijorge/clepherMarketData)
 
-## Learn More
+## License
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Acknowledgments
+- Data provided by [Alpha Vantage](https://www.alphavantage.co/)
+- Charts powered by [Recharts](https://recharts.org/)
