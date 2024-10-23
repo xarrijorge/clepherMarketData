@@ -3,6 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import { ConvertedMarketData } from '../utilities/TimeConverter';
+import { MARKET_SYMBOLS } from '../utilities/marketSymbols';
 
 type SortKey = keyof ConvertedMarketData;
 type SortOrder = 'asc' | 'desc';
@@ -43,14 +44,29 @@ export const MarketTable: React.FC<MarketTableProps> = ({ markets = [] }) => {
   };
 
   const handleRowClick = (market: ConvertedMarketData) => {
+    // Extract the base region (remove any exchange information)
+    const baseRegion = market.region.split('-')[0].trim();
+    
+    // Get the symbol(s) for this region
+    const symbols = MARKET_SYMBOLS[baseRegion];
+    
+    if (!symbols) {
+      console.warn(`No symbols found for region: ${baseRegion}`);
+      return;
+    }
+  
     const exchange = market.primary_exchanges
       .split(',')[0]
       .trim()
       .toLowerCase()
       .replace(/\s+/g, '-');
+  
+    const symbolParam = Array.isArray(symbols) ? symbols.join(',') : symbols;
     
-    navigate(`/exchange/${market.region.toLowerCase()}/${exchange}`);
+    navigate(`/exchange/${market.region.toLowerCase()}/${exchange}?symbols=${symbolParam}`);
   };
+
+ 
 
   // Filter based on search query
   const filteredMarkets = useMemo(() => {
