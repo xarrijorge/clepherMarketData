@@ -47,7 +47,7 @@ const LINE_CONFIGS: LineConfig[] = [
   { key: 'low', color: '#dc2626', label: 'Low' }
 ];
 
-const API_KEY = process.env.REACT_APP_ALPHA_VANTAGE_API_KEY || 'demo';
+const API_KEY = process.env.REACT_APP_ALPHA_VANTAGE_API_KEY;
 
 export const Exchange: React.FC = () => {
   const [searchParams] = useSearchParams();
